@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace API.DTOs.Account
 {
-	public class RegisterDto
+	public class LoginDto
 	{
 		private string _userName;
 		[Required]
@@ -14,16 +14,7 @@ namespace API.DTOs.Account
 			get => _userName;
 			set => _userName = value.ToLower();
 		}
-		private string _email;
 		[Required]
-		[RegularExpression(SD.EmailRegex, ErrorMessage = "Invalid email address")]
-		public string Email
-		{
-			get => _email;
-			set => _email = value.ToLower();
-		}
-		[Required]
-		[StringLength(15, MinimumLength = 6, ErrorMessage = "Password must be at least {2}, and maximum {1} characters")]
 		public string Password { get; set; }
 	}
 }
