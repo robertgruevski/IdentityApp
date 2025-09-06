@@ -1,10 +1,13 @@
 ﻿using API.DTOs.Account;
 using API.Models;
 using API.Services.IServices;
+using API.Utility;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -17,12 +20,14 @@ namespace API.Controllers
 		private readonly UserManager<AppUser> _userManager;
 		private readonly SignInManager<AppUser> _signinManager;
 		private readonly ITokenService _tokenService;
+		private readonly IConfiguration _config;
 
-		public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signingManager, ITokenService tokenService)
+		public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signingManager, ITokenService tokenService, IConfiguration config)
 		{
 			this._userManager = userManager;
 			this._signinManager = signingManager;
 			this._tokenService = tokenService;
+			this._config = config;
 		}
 
 		[HttpPost("login")]
@@ -77,10 +82,29 @@ namespace API.Controllers
 		{
 			string jwt = _tokenService.CreateJWT(user);
 			SetJwtCookie(jwt);
+
+			return new AppUserDto
+			{
+				UserName = user.UserName,
+				JWT = jwt
+			};
 		}
 		private void SetJwtCookie(string jwt)
 		{
+			var cookieOptions = new CookieOptions
+			{
+				IsEssential = true,
+				HttpOnly = true,
+				Secure = true,
+				Expires = DateTime.UtcNow.AddDays(int.Parse(_config["JWT:ExpiresInDays"])),
+				SameSite = SameSiteMode.None
+			};
 
+			Response.Cookies.Append(SD.IdentityAppCookie, jwt, cookieOptions);
+		}
+		private void RemoveJwtCookie()
+		{
+			Response.Cookies.Delete(SD.IdentityAppCookie);
 		}
 		private async Task<bool> CheckEmailExistsAsync(string email)
 		{
