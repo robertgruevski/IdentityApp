@@ -1,5 +1,7 @@
 ﻿using API.DTOs.Account;
+using API.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
@@ -9,10 +11,16 @@ namespace API.Controllers
 	[ApiController]
 	public class AccountController : ControllerBase
 	{
+		private readonly UserManager<AppUser> _userManager;
+
+		public AccountController(UserManager<AppUser> userManager)
+		{
+			this._userManager = userManager;
+		}
 		[HttpPost("register")]
 		public async Task<IActionResult> Register(RegisterDto model)
 		{
-
+			return Ok();
 		}
 	}
 }
