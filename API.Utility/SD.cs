@@ -8,6 +8,10 @@ namespace API.Utility
 {
 	public static class SD
 	{
+		// Application Claims
+		public const string UserId = "uid";
+		public const string UserName = "username";
+		public const string Email = "email";
 
 		//Regex
 		public const string UserNameRegex = "^[a-zA-Z0-9_.-]*$";

@@ -1,5 +1,7 @@
 ﻿using API.Data;
 using API.Models;
+using API.Services;
+using API.Services.IServices;
 using API.Utility;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
@@ -16,6 +18,9 @@ namespace API.Extensions
 		{
 			builder.Services.AddDbContext<Context>(options =>
 				options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+			builder.Services.AddScoped<ITokenService, TokenService>();
+
 			return builder;
 		}
 
