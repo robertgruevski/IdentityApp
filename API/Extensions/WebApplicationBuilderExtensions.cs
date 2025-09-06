@@ -3,12 +3,16 @@ using API.Models;
 using API.Services;
 using API.Services.IServices;
 using API.Utility;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using System;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace API.Extensions
 {
@@ -40,6 +44,36 @@ namespace API.Extensions
 				options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromDays(SD.DefaultLockoutTimeSpanInDays);
 			}).AddEntityFrameworkStores<Context>()
 			.AddDefaultTokenProviders();
+
+			builder.Services.AddAuthentication(options =>
+			{
+				options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+				options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+			}).AddCookie(options =>
+			{
+				options.Cookie.Name = SD.IdentityAppCookie;
+			}).AddJwtBearer(options =>
+			{
+				options.TokenValidationParameters = new TokenValidationParameters
+				{
+					ValidateIssuerSigningKey = true,
+					IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"])),
+					ValidateIssuer = true,
+					ValidIssuer = builder.Configuration["JWT:Issuer"],
+					ValidateAudience = false,
+					ValidateLifetime = true,
+					ClockSkew = TimeSpan.Zero
+				};
+
+				options.Events = new JwtBearerEvents
+				{
+					OnMessageReceived = context =>
+					{
+						context.Token = context.Request.Cookies[SD.IdentityAppCookie];
+						return Task.CompletedTask;
+					}
+				};
+			});
 
 			return builder;
 		}
