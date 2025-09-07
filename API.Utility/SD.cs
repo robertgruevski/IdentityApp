@@ -17,12 +17,15 @@ namespace API.Utility
 		public const string Email = "email";
 
 		//Regex
-		public const string UserNameRegex = "^[a-zA-Z0-9_.-]*$";
+		public const string UserNameRegex = "^[a-zA-Z][a-zA-Z0-9]*";
 		public const string EmailRegex = "^.+@[^\\.].*\\.[a-z]{2,}$";
 
 		//Application Rules
 		public const int RequiredPasswordLength = 6;
 		public const int MaxFailedAccessAttempts = 3;
 		public const int DefaultLockoutTimeSpanInDays = 1;
+
+		// Default Password
+		public const string DefaultPassword = "123456";
 	}
 }
