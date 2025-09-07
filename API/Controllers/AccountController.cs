@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using API.DTOs;
 
 namespace API.Controllers
 {
@@ -41,7 +42,7 @@ namespace API.Controllers
 			if(user is null)
 			{
 				RemoveJwtCookie();
-				return Unauthorized();
+				return Unauthorized(new ApiResponse(401));
 			}
 
 			return CreateAppUserDto(user);
@@ -65,14 +66,14 @@ namespace API.Controllers
 				.FirstOrDefaultAsync();
 
 			if (user is null)
-				return Unauthorized("Invalid username or password");
+				return Unauthorized(new ApiResponse(401, message: "Invalid username or password"));
 
 			var result = await _signinManager.CheckPasswordSignInAsync(user, model.Password, false);
 
 			if (!result.Succeeded)
 			{
 				RemoveJwtCookie();
-				return Unauthorized("Invalid username or password");
+				return Unauthorized(new ApiResponse(401, message: "Invalid username or password"));
 			}
 
 			return CreateAppUserDto(user);
@@ -82,9 +83,9 @@ namespace API.Controllers
 		public async Task<IActionResult> Register(RegisterDto model)
 		{
 			if (await CheckEmailExistsAsync(model.Email))
-				return BadRequest($"An account has been registered with '{model.Email}'. Please try using another email address");
+				return BadRequest(new ApiResponse(400, message: $"An account has been registered with '{model.Email}'. Please try using another email address"));
 			if (await CheckNameExistsAsync(model.Name))
-				return BadRequest($"An account has been registered with '{model.Name}'. Please try using another name (username)");
+				return BadRequest(new ApiResponse(400, message: $"An account has been registered with '{model.Name}'. Please try using another name (username)"));
 
 			var userToAdd = new AppUser
 			{
@@ -99,7 +100,7 @@ namespace API.Controllers
 			if (!result.Succeeded)
 				return BadRequest(result.Errors);
 
-			return Ok("Your account has been created, you can login");
+			return Ok(new ApiResponse(200, message: "Your account has been created, you can login"));
 		}
 
 		[HttpGet("name-taken")]
