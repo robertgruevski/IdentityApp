@@ -8,7 +8,7 @@ namespace API.DTOs.Account
 		[Required]
 		[StringLength(15, MinimumLength = 3, ErrorMessage = "Username must be at least {2}, and maximum {1} characters")]
 		[RegularExpression(SD.UserNameRegex, ErrorMessage = "Username must contain only a-z A-Z 0-9 characters")]
-		public string UserName { get; set; }
+		public string Name { get; set; }
 		private string _email;
 		[Required]
 		[RegularExpression(SD.EmailRegex, ErrorMessage = "Invalid email address")]

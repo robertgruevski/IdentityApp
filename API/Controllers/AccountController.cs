@@ -82,15 +82,17 @@ namespace API.Controllers
 		public async Task<IActionResult> Register(RegisterDto model)
 		{
 			if (await CheckEmailExistsAsync(model.Email))
-				return BadRequest($"An account has been registered with '{model.Email}'. Please try using another email address.");
-			if (await CheckUserNameExistsAsync(model.UserName))
-				return BadRequest($"An account has been registered with '{model.UserName}'. Please try using another username.");
+				return BadRequest($"An account has been registered with '{model.Email}'. Please try using another email address");
+			if (await CheckNameExistsAsync(model.Name))
+				return BadRequest($"An account has been registered with '{model.Name}'. Please try using another name (username)");
 
 			var userToAdd = new AppUser
 			{
-				UserName = model.UserName,
+				Name = model.Name,
+				UserName = model.Name.ToLower(),
 				Email = model.Email,
-				EmailConfirmed = true
+				EmailConfirmed = true,
+				LockoutEnabled = true
 			};
 
 			var result = await _userManager.CreateAsync(userToAdd, model.Password);
@@ -98,6 +100,18 @@ namespace API.Controllers
 				return BadRequest(result.Errors);
 
 			return Ok("Your account has been created, you can login");
+		}
+
+		[HttpGet("name-taken")]
+		public async Task<IActionResult> NameTaken([FromQuery] string name)
+		{
+			return Ok(new { IsTaken = await CheckNameExistsAsync(name) });
+		}
+
+		[HttpGet("email-taken")]
+		public async Task<IActionResult> EmailTaken([FromQuery] string email)
+		{
+			return Ok(new { IsTaken = await CheckEmailExistsAsync(email) });
 		}
 
 		[Authorize]
@@ -141,9 +155,9 @@ namespace API.Controllers
 		{
 			return await _userManager.Users.AnyAsync(x => x.Email == email);
 		}
-		private async Task<bool> CheckUserNameExistsAsync(string userName)
+		private async Task<bool> CheckNameExistsAsync(string name)
 		{
-			return await _userManager.Users.AnyAsync(x => x.UserName == userName);
+			return await _userManager.Users.AnyAsync(x => x.UserName == name);
 		}
 		#endregion
 	}
