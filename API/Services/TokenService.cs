@@ -27,6 +27,7 @@ namespace API.Services
 			{
 				new Claim(SD.UserId, user.Id.ToString()),
 				new Claim(SD.UserName, user.UserName),
+				new Claim(SD.Name, user.Name),
 				new Claim(SD.Email, user.Email)
 			};
 
