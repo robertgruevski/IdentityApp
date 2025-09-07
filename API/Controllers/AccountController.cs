@@ -68,11 +68,18 @@ namespace API.Controllers
 			if (user is null)
 				return Unauthorized(new ApiResponse(401, message: "Invalid username or password"));
 
-			var result = await _signinManager.CheckPasswordSignInAsync(user, model.Password, false);
+			var result = await _signinManager.CheckPasswordSignInAsync(user, model.Password, true);
 
 			if (!result.Succeeded)
 			{
 				RemoveJwtCookie();
+
+				if(result.IsLockedOut)
+				{
+					return Unauthorized(new ApiResponse(401, title: "Account Locked", 
+						message: SD.AccountLockedMessage(user.LockoutEnd.Value.DateTime), isHtmlEnabled: true, displayByDefault: true));
+				}
+
 				return Unauthorized(new ApiResponse(401, message: "Invalid username or password"));
 			}
 

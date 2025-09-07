@@ -28,5 +28,17 @@ namespace API.Utility
 
 		// Default Password
 		public const string DefaultPassword = "123456";
+
+		public static string AccountLockedMessage(DateTime endDate)
+		{
+			DateTime startDate = DateTime.UtcNow;
+			TimeSpan difference = endDate - startDate;
+
+			int days = difference.Days;
+			int hours = difference.Hours;
+			int minutes = difference.Minutes + 1;
+
+			return string.Format("Your account is temporary locked. <br>You should wai {0} day(s), {1} hour(s), and {2} minute(s)", days, hours, minutes);
+		}
 	}
 }
