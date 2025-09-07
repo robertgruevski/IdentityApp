@@ -2,6 +2,8 @@
 using API.Models;
 using API.Services.IServices;
 using API.Utility;
+using API.Extensions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -28,6 +30,21 @@ namespace API.Controllers
 			this._signinManager = signingManager;
 			this._tokenService = tokenService;
 			this._config = config;
+		}
+
+		[Authorize]
+		[HttpGet("refresh-appuser")]
+		public async Task<ActionResult<AppUserDto>> RefreshAppUser()
+		{
+			var user = await _userManager.Users.Where(x => x.Id == User.GetUserId()).FirstOrDefaultAsync();
+
+			if(user is null)
+			{
+				RemoveJwtCookie();
+				return Unauthorized();
+			}
+
+			return CreateAppUserDto(user);
 		}
 
 		[HttpGet("auth-status")]
@@ -81,6 +98,14 @@ namespace API.Controllers
 				return BadRequest(result.Errors);
 
 			return Ok("Your account has been created, you can login");
+		}
+
+		[Authorize]
+		[HttpPost("logout")]
+		public IActionResult Logout()
+		{
+			RemoveJwtCookie();
+			return NoContent();
 		}
 
 		#region Private Methods
