@@ -6,8 +6,8 @@ namespace API.DTOs.Account
 	public class RegisterDto
 	{
 		[Required]
-		[StringLength(15, MinimumLength = 3, ErrorMessage = "Username must be at least {2}, and maximum {1} characters")]
-		[RegularExpression(SD.UserNameRegex, ErrorMessage = "Username must contain only a-z A-Z 0-9 characters")]
+		[StringLength(15, MinimumLength = 3, ErrorMessage = "Name (username) must be at least {2}, and maximum {1} characters")]
+		[RegularExpression(SD.UserNameRegex, ErrorMessage = "Name (username) must start with a letter and can only contain letters (a-z, A-Z) and numbers (0-9)")]
 		public string Name { get; set; }
 		private string _email;
 		[Required]
