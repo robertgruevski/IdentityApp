@@ -5,9 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace API.Controllers
 {
 	[Authorize]
-	[Route("api/[controller]")]
-	[ApiController]
-	public class PlayController : ControllerBase
+	public class PlayController : ApiCoreController
 	{
 		[HttpGet("get-players")]
 		public IActionResult GetPlayers()

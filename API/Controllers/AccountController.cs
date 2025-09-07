@@ -16,21 +16,17 @@ using API.DTOs;
 
 namespace API.Controllers
 {
-	[Route("api/[controller]")]
-	[ApiController]
-	public class AccountController : ControllerBase
+	public class AccountController : ApiCoreController
 	{
 		private readonly UserManager<AppUser> _userManager;
 		private readonly SignInManager<AppUser> _signinManager;
 		private readonly ITokenService _tokenService;
-		private readonly IConfiguration _config;
 
-		public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signingManager, ITokenService tokenService, IConfiguration config)
+		public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signingManager, ITokenService tokenService)
 		{
 			this._userManager = userManager;
 			this._signinManager = signingManager;
 			this._tokenService = tokenService;
-			this._config = config;
 		}
 
 		[Authorize]
@@ -149,7 +145,7 @@ namespace API.Controllers
 				IsEssential = true,
 				HttpOnly = true,
 				Secure = true,
-				Expires = DateTime.UtcNow.AddDays(int.Parse(_config["JWT:ExpiresInDays"])),
+				Expires = DateTime.UtcNow.AddDays(int.Parse(Configuration["JWT:ExpiresInDays"])),
 				SameSite = SameSiteMode.None
 			};
 

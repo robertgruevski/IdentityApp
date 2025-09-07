@@ -19,6 +19,13 @@ builder.AddAuthenticationServices();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseCors(options =>
+{
+	options.AllowAnyHeader()
+	.AllowAnyMethod()
+	.AllowCredentials()
+	.WithOrigins(builder.Configuration["JWT:ClientUrl"]);
+});
 
 app.UseHttpsRedirection();
 
