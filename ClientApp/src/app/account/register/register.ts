@@ -71,11 +71,15 @@ export class Register implements OnInit {
     this.submitted = true;
     this.errorMessages = [];
 
-    if (this.form.invalid) {
+    if (this.form.valid) {
       this.accountService.register(this.form.value).subscribe({
         next: (response) => {
           this.sharedService.showNotification(response);
-          this.router.navigateByUrl('/');
+          this.router.navigate(['/account/confirm-email'], {
+            queryParams: {
+              email: this.form.get('email')?.value
+            }
+          })
         },
         error: (error) => {
           if (error.errors) {

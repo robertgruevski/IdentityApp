@@ -28,7 +28,7 @@
                 <div class="invalid-feedback">
                     Name must contain only a-z A-Z 0-9 characters
                 </div>
-                }@else if(form.get('name')?.dirty && form.get('name')?.hasError('nameTaken')) {
+                } @else if(form.get('name')?.dirty && form.get('name')?.hasError('nameTaken')) {
                 <div class="invalid-feedback">
                     Name is already taken. Please choose a different one.
                 </div>
@@ -53,7 +53,7 @@
                 <div class="invalid-feedback">
                     Invalid email address
                 </div>
-                }@else if(form.get('email')?.dirty && form.get('email')?.hasError('emailTaken')) {
+                } @else if(form.get('email')?.dirty && form.get('email')?.hasError('emailTaken')) {
                 <div class="invalid-feedback">
                     Email is already taken. Please choose a different one.
                 </div>
