@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Threading.Tasks;
 
 namespace API.Controllers
 {
@@ -26,6 +28,16 @@ namespace API.Controllers
 		protected string GetClientUrl()
 		{
 			return Configuration["JWT:ClientUrl"];
+		}
+
+		protected void PauseResponse(double sec = 1.3)
+		{
+			var t = Task.Run(async delegate
+			{
+				await Task.Delay(TimeSpan.FromSeconds(sec));
+				return 42;
+			});
+			t.Wait();
 		}
 	}
 }
