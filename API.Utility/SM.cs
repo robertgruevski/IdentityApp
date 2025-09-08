@@ -6,7 +6,7 @@
 		public const string T_AccountCreated = "Account created";
 		public const string T_EmailSent = "Email sent";
 		public const string T_AccountSuspended = "Account suspended";
-		public const string T_InvallidToken = "Invalid token";
+		public const string T_InvalidToken = "Invalid token";
 		public const string T_EmailSentFailed = "Failed to send email";
 		public const string T_EmailConfirmed = "Email confirmed";
 		public const string T_ConfirmEmailFirst = "Confirm your email first";
@@ -16,7 +16,7 @@
 
 		// Messages
 		public const string M_AccountCreated = "Your account has been created, please confrim your email address.";
-		public const string M_InavlidToken = "Invalid token. Please try again.";
+		public const string M_InvalidToken = "Invalid token. Please try again.";
 		public const string M_AccountSuspended = "Your account has been suspended. Please contact our site administrator for more information.";
 		public const string M_ForgotUsernamePasswordSent = "If an eligible account exists, we've sent password reset instructions to its primary email. Check your inbox or spam folder.";
 		public const string M_ConfirmEmailSend = "If an eligible account exists, we've sent account activation instructions to its primary email. Check your inbox or spam folder.";

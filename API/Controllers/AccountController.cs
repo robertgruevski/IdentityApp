@@ -13,6 +13,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using API.DTOs;
+using System.IO;
 
 namespace API.Controllers
 {
@@ -93,7 +94,7 @@ namespace API.Controllers
 				Name = model.Name,
 				UserName = model.Name.ToLower(),
 				Email = model.Email,
-				EmailConfirmed = true,
+				EmailConfirmed = false,
 				LockoutEnabled = true
 			};
 
@@ -101,7 +102,21 @@ namespace API.Controllers
 			if (!result.Succeeded)
 				return BadRequest(result.Errors);
 
-			return Ok(new ApiResponse(200, message: "Your account has been created, you can login"));
+			try
+			{
+				if(await SendConfirmEmailAsync(userToAdd))
+				{
+					return Ok(new ApiResponse(201, title: SM.T_AccountCreated, message: SM.M_AccountCreated));
+				}
+
+				return BadRequest(new ApiResponse(400, title: SM.T_EmailSentFailed,
+					message: SM.M_EmailSentFailed, displayByDefault: true));
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(new ApiResponse(400, title: SM.T_EmailSentFailed, 
+					message: SM.M_EmailSentFailed, displayByDefault: true));
+			}
 		}
 
 		[HttpGet("name-taken")]
@@ -122,6 +137,48 @@ namespace API.Controllers
 		{
 			RemoveJwtCookie();
 			return NoContent();
+		}
+
+		[HttpPut("confirm-email")]
+		public async Task<ActionResult<ApiResponse>> ConfirmEmail(ConfirmEmailDto model)
+		{
+			var user = await _userManager.FindByEmailAsync(model.Email);
+			if(user is null)
+			{
+				return Unauthorized(new ApiResponse(401, title: SM.T_InvalidToken, message: SM.M_InvalidToken, 
+					displayByDefault: true));
+			}
+
+			if(!user.IsActive)
+			{
+				return Unauthorized(new ApiResponse(401, title: SM.T_AccountSuspended, message: SM.M_AccountSuspended, 
+					displayByDefault: true));
+			}
+
+			if(user.EmailConfirmed)
+			{
+				return BadRequest(new ApiResponse(400, title: SM.T_AccountWasConfirmed, message: SM.M_AccountWasConfirmed, 
+					displayByDefault: true));
+			}
+
+			var appUserToken = await Context.AppUserTokens
+				.FirstOrDefaultAsync(x => x.UserId == user.Id && x.Name == SD.EC && x.Value == model.Token);
+			if(appUserToken is null || appUserToken.Expires <= DateTime.UtcNow)
+			{
+				if(appUserToken is not null)
+				{
+					Context.AppUserTokens.Remove(appUserToken);
+					await Context.SaveChangesAsync();
+				}
+				return Unauthorized(new ApiResponse(401, title: SM.T_InvalidToken, message: SM.M_InvalidToken, 
+					displayByDefault: true));
+			}
+
+			Context.AppUserTokens.Remove(appUserToken);
+			user.EmailConfirmed = true;
+			await Context.SaveChangesAsync();
+
+			return Ok(new ApiResponse(200, title: SM.T_EmailConfirmed, message: SM.M_EmailConfirmed));
 		}
 
 		#region Private Methods
@@ -160,6 +217,44 @@ namespace API.Controllers
 		private async Task<bool> CheckNameExistsAsync(string name)
 		{
 			return await _userManager.Users.AnyAsync(x => x.UserName == name);
+		}
+		private async Task<bool> SendConfirmEmailAsync(AppUser user)
+		{
+			var userToken = await Context.AppUserTokens
+				.Where(x => x.UserId == user.Id && x.Name == SD.EC)
+				.FirstOrDefaultAsync();
+
+			var tokenExpiresInMinutes = TokenExpiresInMinutes();
+
+			if(userToken is null)
+			{
+				var userTokenToAdd = new AppUserToken
+				{
+					UserId = user.Id,
+					Name = SD.EC,
+					Value = SD.GenerateRandomString(),
+					Expires = DateTime.UtcNow.AddMinutes(tokenExpiresInMinutes),
+					LoginProvider = string.Empty
+				};
+
+				Context.AppUserTokens.Add(userTokenToAdd);
+				userToken = userTokenToAdd;
+			}
+			else
+			{
+				userToken.Value = SD.GenerateRandomString();
+				userToken.Expires = DateTime.UtcNow.AddMinutes(tokenExpiresInMinutes);
+			}
+
+			await Context.SaveChangesAsync();
+
+			using StreamReader streamReader = System.IO.File.OpenText("EmailTemplates/confirm_email.html");
+			string htmlBody = streamReader.ReadToEnd();
+
+			string messageBody = string.Format(htmlBody, GetClientUrl(), user.Name, user.UserName, user.Email, userToken.Value, tokenExpiresInMinutes);
+			var emailSend = new EmailSendDto(user.Email, "Verify your email address", messageBody);
+
+			return await Services.EmailService.SendEmailAsync(emailSend);
 		}
 		#endregion
 	}

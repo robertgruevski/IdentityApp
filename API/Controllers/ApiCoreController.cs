@@ -17,5 +17,15 @@ namespace API.Controllers
 		protected IConfiguration Configuration => _config ??= HttpContext.RequestServices.GetService<IConfiguration>();
 		protected Context Context => _context ??= HttpContext.RequestServices.GetService<Context>();
 		protected IServiceUnitOfWork Services => _services ??= HttpContext.RequestServices.GetService<IServiceUnitOfWork>();
+
+		protected int TokenExpiresInMinutes()
+		{
+			return int.Parse(Configuration["Email:TokenExpiresInMinutes"]);
+		}
+
+		protected string GetClientUrl()
+		{
+			return Configuration["JWT:ClientUrl"];
+		}
 	}
 }
