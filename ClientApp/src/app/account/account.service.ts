@@ -7,6 +7,8 @@ import { AuthStatusModel, UserModel } from '../shared/models/account/user.model'
 import { map } from 'rxjs';
 import { RegisterModel } from '../shared/models/account/register.model';
 import { ApiResponse } from '../shared/models/apiResponse.model';
+import { ConfirmEmailModel, EmailModel } from '../shared/models/account/confirmEmail.model';
+import { ResetPasswordModel } from '../shared/models/account/resetPassword.model';
 
 @Injectable({
   providedIn: 'root',
@@ -43,7 +45,7 @@ export class AccountService {
       })
     );
   }
-  
+
   register(model: RegisterModel) {
     return this.http.post<ApiResponse<any>>(environment.apiUrl + 'account/register', model);
   }
@@ -63,6 +65,22 @@ export class AccountService {
         this.route.navigateByUrl('/');
       })
     );
+  }
+
+  confirmEmail(model: ConfirmEmailModel) {
+    return this.http.put<ApiResponse<any>>(this.apiUrl + 'account/confirm-email', model);
+  }
+
+  resendConfirmationEmail(mode: EmailModel) {
+    return this.http.post<ApiResponse<any>>(this.apiUrl + 'account/resend-confirmation-email', mode);
+  }
+
+  forgotUsernameOrPassword(model: EmailModel) {
+    return this.http.post<ApiResponse<any>>(this.apiUrl + 'account/forgot-username-or-password', model);
+  }
+
+  resetPassword(model: ResetPasswordModel) {
+    return this.http.put<ApiResponse<any>>(this.apiUrl + 'account/reset-password', model);
   }
 
   // #regin Private Methods
