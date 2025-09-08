@@ -38,7 +38,7 @@ namespace API.Utility
 			int hours = difference.Hours;
 			int minutes = difference.Minutes + 1;
 
-			return string.Format("Your account is temporary locked. <br>You should wai {0} day(s), {1} hour(s), and {2} minute(s)", days, hours, minutes);
+			return string.Format("Your account is temporary locked. <br>You should wait {0} day(s), {1} hour(s), and {2} minute(s)", days, hours, minutes);
 		}
 	}
 }

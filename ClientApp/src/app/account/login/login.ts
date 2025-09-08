@@ -17,11 +17,23 @@ export class Login implements OnInit {
   returnUrl: string | null = null;
 
   private formBuilder = inject(FormBuilder);
-  private route = inject(Router);
+  private router = inject(Router);
   private activatedRoute = inject(ActivatedRoute);
   private accountService = inject(AccountService);
 
-  constructor() {}
+  constructor() {
+    if (this.accountService.$user()) {
+      this.router.navigateByUrl('/');
+    } else {
+      this.activatedRoute.queryParamMap.subscribe({
+        next: (params: any) => {
+          if (params) {
+            this.returnUrl = params.get('returnUrl');
+          }
+        },
+      });
+    }
+  }
 
   ngOnInit(): void {
     this.initializeForm();
@@ -41,10 +53,16 @@ export class Login implements OnInit {
     if (this.form.valid) {
       this.accountService.login(this.form.value).subscribe({
         next: (response) => {
-          console.log(response);
+          if (this.returnUrl) {
+            this.router.navigateByUrl(this.returnUrl);
+          } else {
+            this.router.navigateByUrl('/');
+          }
         },
         error: (error) => {
-          console.log(error);
+          if (error.error.errors) {
+            this.errorMessages = error.error.errors;
+          }
         },
       });
     }
