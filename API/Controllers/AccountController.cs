@@ -20,13 +20,11 @@ namespace API.Controllers
 	{
 		private readonly UserManager<AppUser> _userManager;
 		private readonly SignInManager<AppUser> _signinManager;
-		private readonly ITokenService _tokenService;
 
-		public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signingManager, ITokenService tokenService)
+		public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signingManager)
 		{
 			this._userManager = userManager;
 			this._signinManager = signingManager;
-			this._tokenService = tokenService;
 		}
 
 		[Authorize]
@@ -129,7 +127,7 @@ namespace API.Controllers
 		#region Private Methods
 		private AppUserDto CreateAppUserDto(AppUser user)
 		{
-			string jwt = _tokenService.CreateJWT(user);
+			string jwt = Services.TokenService.CreateJWT(user);
 			SetJwtCookie(jwt);
 
 			return new AppUserDto

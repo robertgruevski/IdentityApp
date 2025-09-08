@@ -1,4 +1,5 @@
 ﻿using API.Data;
+using API.Services.IServices;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -12,7 +13,9 @@ namespace API.Controllers
 	{
 		private Context _context;
 		private IConfiguration _config;
+		private IServiceUnitOfWork _services;
 		protected IConfiguration Configuration => _config ??= HttpContext.RequestServices.GetService<IConfiguration>();
 		protected Context Context => _context ??= HttpContext.RequestServices.GetService<Context>();
+		protected IServiceUnitOfWork Services => _services ??= HttpContext.RequestServices.GetService<IServiceUnitOfWork>();
 	}
 }
