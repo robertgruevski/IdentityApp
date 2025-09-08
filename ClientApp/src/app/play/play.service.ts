@@ -1,8 +1,17 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import { environment } from '../../environments/environment.development';
+import { HttpClient } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PlayService {
+  apiUrl = environment.apiUrl;
   
+  private http = inject(HttpClient);
+  
+  getPlayers() {
+    return this.http.get(this.apiUrl + 'play/get-players');
+  }
+
 }

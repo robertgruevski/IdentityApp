@@ -18,7 +18,7 @@ namespace API.Utility
 		public const string Email = "email";
 
 		//Regex
-		public const string UserNameRegex = "^[a-zA-Z][a-zA-Z0-9]*";
+		public const string UserNameRegex = "^[a-zA-Z][a-zA-Z0-9]*$";
 		public const string EmailRegex = "^.+@[^\\.].*\\.[a-z]{2,}$";
 
 		//Application Rules

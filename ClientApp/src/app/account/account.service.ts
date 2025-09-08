@@ -5,6 +5,8 @@ import { Router } from '@angular/router';
 import { LoginModel } from '../shared/models/account/login.model';
 import { AuthStatusModel, UserModel } from '../shared/models/account/user.model';
 import { map } from 'rxjs';
+import { RegisterModel } from '../shared/models/account/register.model';
+import { ApiResponse } from '../shared/models/apiResponse.model';
 
 @Injectable({
   providedIn: 'root',
@@ -40,6 +42,18 @@ export class AccountService {
         }
       })
     );
+  }
+  
+  register(model: RegisterModel) {
+    return this.http.post<ApiResponse<any>>(environment.apiUrl + 'account/register', model);
+  }
+
+  checkNameTaken(name: string) {
+    return this.http.get(environment.apiUrl + 'account/name-taken?name=' + name);
+  }
+
+  checkEmailTaken(email: string) {
+    return this.http.get(environment.apiUrl + 'account/email-taken?email=' + email);
   }
 
   logout() {

@@ -6,7 +6,7 @@
         <div class="row">
             <div class="col-12 col-md-6 offset-md-3 pb-3">
                 <label for="userName">Username</label>
-                <input type="text" formControlName="userName" class="form-control" placeholder="Username"
+                <input type="text" formControlName="userName" class="form-control" placeholder=""
                     [class.is-invalid]="submitted && form.get('userName')?.hasError('required')" />
                 @if (submitted && form.get('userName')?.hasError('required')) {
                 <div class="text-danger">
@@ -16,7 +16,7 @@
             </div>
             <div class="col-12 col-md-6 offset-md-3 pb-3">
                 <label for="password">Password</label>
-                <input type="text" formControlName="password" class="form-control" placeholder="Password"
+                <input type="password" formControlName="password" class="form-control" placeholder=""
                     [class.is-invalid]="submitted && form.get('password')?.hasError('required')" />
                 @if (submitted && form.get('password')?.hasError('required')) {
                 <div class="text-danger">
