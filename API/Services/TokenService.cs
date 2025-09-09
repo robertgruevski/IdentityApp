@@ -8,6 +8,7 @@ using OtpNet;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Text;
 
@@ -17,11 +18,13 @@ namespace API.Services
 	{
 		private readonly IConfiguration _config;
 		private readonly SymmetricSecurityKey _jwtKey;
+		private readonly SymmetricSecurityKey _mfaKey;
 
 		public TokenService(IConfiguration config)
 		{
 			this._config = config;
 			_jwtKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JWT:Key"]));
+			_mfaKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["MFA:Key"]));
 		}
 		public string CreateJWT(AppUser user)
 		{
@@ -63,6 +66,52 @@ namespace API.Services
 		{
 			var totp = new Totp(Base32Encoding.ToBytes(secretKey));
 			return totp.VerifyTotp(code, out _, new VerificationWindow(1, 1));
+		}
+
+		public string CreateMfaToken(string userName)
+		{
+			var claims = new List<Claim>
+			{
+				new Claim(SD.UserName, userName)
+			};
+
+			var creds = new SigningCredentials(_mfaKey, SecurityAlgorithms.HmacSha512Signature);
+
+			var tokenDescriptor = new SecurityTokenDescriptor
+			{
+				Subject = new ClaimsIdentity(claims),
+				Expires = DateTime.UtcNow.AddMinutes(int.Parse(_config["MFA:TokenExpiresInMinutes"])),
+				SigningCredentials = creds,
+				Issuer = _config["MFA:Issuer"]
+			};
+
+			var tokenHandler = new JwtSecurityTokenHandler();
+			var token = tokenHandler.CreateToken(tokenDescriptor);
+
+			return tokenHandler.WriteToken(token);
+		}
+		public string GetUserNameFromMfaToken(string mfaToken)
+		{
+			try
+			{
+				var tokenHandler = new JwtSecurityTokenHandler();
+				tokenHandler.ValidateToken(mfaToken, new TokenValidationParameters
+				{
+					ValidateIssuerSigningKey = true,
+					IssuerSigningKey = _mfaKey,
+					ValidateIssuer = true,
+					ValidIssuer = _config["MFA:Issuer"],
+					ValidateAudience = false,
+					ClockSkew = TimeSpan.Zero
+				}, out SecurityToken validatedToken);
+
+				var token = (JwtSecurityToken)validatedToken;
+				return token.Claims.First(x => x.Type == SD.UserName)?.Value;
+			}
+			catch (Exception ex)
+			{
+				return null;
+			}
 		}
 	}
 }

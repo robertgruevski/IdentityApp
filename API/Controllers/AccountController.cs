@@ -52,16 +52,22 @@ namespace API.Controllers
 
 			var message = await UserPasswordValidationAsync(user, model.Password);
 			if (!string.IsNullOrEmpty(message))
-			{
 				return Unauthorized(new ApiResponse(401, message: message, displayByDefault: true, isHtmlEnabled: true));
-			}
 
 			if (!user.EmailConfirmed)
-			{
 				return Unauthorized(new ApiResponse(401, title: SM.T_ConfirmEmailFirst, message: SM.M_ConfirmEmailFirst, displayByDefault: true));
-			}
 
-			return CreateAppUserDto(user);
+			if (user.TwoFactorEnabled)
+			{
+				return new AppUserDto
+				{
+					MfaToken = Services.TokenService.CreateMfaToken(user.UserName)
+				};
+			}
+			else
+			{
+				return CreateAppUserDto(user);
+			}
 		}
 
 		[HttpPost("register")]
