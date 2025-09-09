@@ -291,8 +291,47 @@ namespace API.Controllers
 			return Ok(new ApiResponse(200, title: SM.T_PasswordReset, message: SM.M_PasswordReset));
 		}
 
-		#region Private Methods
+		[HttpPost("mfa-verify")]
+		public async Task<ActionResult<AppUserDto>> MfaVerify(MfaVerifyDto model)
+		{
+			var userName = Services.TokenService.GetUserNameFromMfaToken(model.MfaToken);
+			if (string.IsNullOrEmpty(userName))
+			{
+				RemoveJwtCookie();
+				return Unauthorized(new ApiResponse(401, message: "Invalid code!", displayByDefault: true));
+			}
 
+			var user = await UserManager.FindByNameAsync(userName);
+			if(user is null)
+			{
+				RemoveJwtCookie();
+				return Unauthorized(new ApiResponse(401, message: "Invalid code!", displayByDefault: true));
+			}
+
+			if (!await UserManager.GetTwoFactorEnabledAsync(user))
+				return BadRequest(new ApiResponse(400, message: "Multi-factor authentication not enabled.", displayByDefault: true));
+
+			var userToken = await Context.UserTokens
+				.Where(x => x.UserId == user.Id && x.LoginProvider == SD.Authenticator && x.Name == SD.MFAS)
+				.FirstOrDefaultAsync();
+
+			if(userToken is null)
+			{
+				RemoveJwtCookie();
+				return Unauthorized(new ApiResponse(401, message: "Invalid code!", displayByDefault: true));
+			}
+
+			var isValid = Services.TokenService.ValidateCode(userToken.Value, model.Code);
+			if (!isValid)
+			{
+				RemoveJwtCookie();
+				return Unauthorized(new ApiResponse(401, message: "Invalid code!", displayByDefault: true));
+			}
+
+			return CreateAppUserDto(user);
+		}
+
+		#region Private Methods
 		private async Task<bool> SendForgotUsernameOrPasswordEmail(AppUser user)
 		{
 			var userToken = await Context.AppUserTokens
