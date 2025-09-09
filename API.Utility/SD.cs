@@ -17,7 +17,7 @@ namespace API.Utility
 		public const string UserId = "uid";
 		public const string Name = "name";
 		public const string UserName = "username";
-		public const string Email = "email";
+		public const string Email = "eml";
 
 		//Regex
 		public const string UserNameRegex = "^[a-zA-Z][a-zA-Z0-9]*$";
@@ -34,6 +34,8 @@ namespace API.Utility
 		// Naming
 		public const string EC = "ec"; // Email confirmation
 		public const string FUP = "fup"; // Forgot username or password
+		public const string Authenticator = "authenticator";
+		public const string MFAS = "mfas";
 
 		public static string AccountLockedMessage(DateTime endDate)
 		{

@@ -7,5 +7,6 @@ namespace API.Services.IServices
 	{
 		string CreateJWT(AppUser user);
 		QrCodeDto GenerateQrCode(string email);
+		bool ValidateCode(string secretKey, string code);
 	}
 }

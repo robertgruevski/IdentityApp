@@ -1,4 +1,6 @@
-﻿namespace API.DTOs.MyProfile
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace API.DTOs.MyProfile
 {
 	public class QrCodeDto
 	{
@@ -9,5 +11,12 @@
 		}
 		public string Secret { get; set; }
 		public string Uri { get; set; }
+	}
+
+	public class MfaEnableDto : EditProfileBaseDto
+	{
+		[Required]
+		public string Secret { get; set; }
+		public string Code { get; set; }
 	}
 }

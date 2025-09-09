@@ -58,5 +58,11 @@ namespace API.Services
 
 			return new QrCodeDto(secret, uri);
 		}
+		
+		public bool ValidateCode(string secretKey, string code)
+		{
+			var totp = new Totp(Base32Encoding.ToBytes(secretKey));
+			return totp.VerifyTotp(code, out _, new VerificationWindow(1, 1));
+		}
 	}
 }

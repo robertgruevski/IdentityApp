@@ -62,7 +62,7 @@ namespace API.Controllers
 
 				try
 				{
-					if(await SendConfirmEmailAsync(user))
+					if (await SendConfirmEmailAsync(user))
 					{
 						RemoveJwtCookie();
 						return Ok(new ApiResponse(200, title: "Email was changed.", message: "Your changes have been saved, and you've been logged out due to the email change. Please confirm your email address."));
@@ -135,13 +135,61 @@ namespace API.Controllers
 				.Select(x => x.TwoFactorEnabled)
 				.FirstOrDefaultAsync();
 
-			return Ok(new { IsEnabled = isEnabled});
+			return Ok(new { IsEnabled = isEnabled });
 		}
 
 		[HttpGet("qr-code")]
 		public async Task<ActionResult<QrCodeDto>> GetQrCode()
 		{
 			return Services.TokenService.GenerateQrCode(User.GetEmail());
+		}
+
+		[HttpPut("mfa-enable")]
+		public async Task<ActionResult<ApiResponse>> MfaEnable(MfaEnableDto model)
+		{
+			var user = await UserManager.FindByNameAsync(User.GetUserName());
+			if (user is null)
+				return NotFound();
+
+			var message = await UserPasswordValidationAsync(user, model.CurrentPassword);
+			if (!string.IsNullOrEmpty(message))
+				return Unauthorized(new ApiResponse(401, message: message, displayByDefault: true, isHtmlEnabled: true));
+
+			var isValid = Services.TokenService.ValidateCode(model.Secret, model.Code);
+			if (!isValid)
+				return BadRequest(new ApiResponse(400, message: "Invalid code, please try again", displayByDefault: true));
+
+			var result = await UserManager.SetTwoFactorEnabledAsync(user, true);
+			if (!result.Succeeded)
+				return BadRequest(new ApiResponse(400, displayByDefault: true));
+
+			result = await UserManager.SetAuthenticationTokenAsync(user, SD.Authenticator, SD.MFAS, model.Secret);
+			if (!result.Succeeded)
+				return BadRequest(new ApiResponse(400, displayByDefault: true));
+
+			return Ok(new ApiResponse(200, message: "Multi-factor authentication enabled"));
+		}
+
+		[HttpPut("mfa-disable")]
+		public async Task<ActionResult<ApiResponse>> MfaDisable(EditProfileBaseDto model)
+		{
+			var user = await UserManager.FindByNameAsync(User.GetUserName());
+			if (user is null)
+				return NotFound();
+
+			var message = await UserPasswordValidationAsync(user, model.CurrentPassword);
+			if (!string.IsNullOrEmpty(message))
+				return Unauthorized(new ApiResponse(401, message: message, displayByDefault: true, isHtmlEnabled: true));
+
+			var result = await UserManager.SetTwoFactorEnabledAsync(user, false);
+			if (!result.Succeeded)
+				return BadRequest(new ApiResponse(400, displayByDefault: true));
+
+			result = await UserManager.RemoveAuthenticationTokenAsync(user, SD.Authenticator, SD.MFAS);
+			if (!result.Succeeded)
+				return BadRequest(new ApiResponse(400, displayByDefault: true));
+
+			return Ok(new ApiResponse(200, message: "Multi-factor authentication disabled."));
 		}
 	}
 }
