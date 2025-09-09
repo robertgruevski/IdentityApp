@@ -79,11 +79,11 @@ namespace API.Controllers
 		}
 		protected async Task<bool> CheckEmailExistsAsync(string email)
 		{
-			return await _userManager.Users.AnyAsync(x => x.Email == email);
+			return await UserManager.Users.AnyAsync(x => x.Email == email);
 		}
 		protected async Task<bool> CheckNameExistsAsync(string name)
 		{
-			return await _userManager.Users.AnyAsync(x => x.UserName == name);
+			return await UserManager.Users.AnyAsync(x => x.UserName == name);
 		}
 		protected async Task<bool> SendConfirmEmailAsync(AppUser user)
 		{
@@ -113,15 +113,18 @@ namespace API.Controllers
 				userToken.Expires = DateTime.UtcNow.AddMinutes(tokenExpiresInMinutes);
 			}
 
-			await Context.SaveChangesAsync();
-
 			using StreamReader streamReader = System.IO.File.OpenText("EmailTemplates/confirm_email.html");
 			string htmlBody = streamReader.ReadToEnd();
 
 			string messageBody = string.Format(htmlBody, GetClientUrl(), user.Name, user.UserName, user.Email, userToken.Value, tokenExpiresInMinutes);
 			var emailSend = new EmailSendDto(user.Email, "Verify your email address", messageBody);
 
-			return await Services.EmailService.SendEmailAsync(emailSend);
+			if(await Services.EmailService.SendEmailAsync(emailSend))
+			{
+				await Context.SaveChangesAsync();
+				return true;
+			}
+			return false;
 		}
 
 		protected int TokenExpiresInMinutes()
