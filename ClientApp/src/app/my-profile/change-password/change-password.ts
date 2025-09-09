@@ -5,10 +5,11 @@ import { ValidationMessage } from '../../shared/components/errors/validation-mes
 import { MyProfileService } from '../my-profile.service';
 import { SharedService } from '../../shared/shared.service';
 import { matchValues } from '../../shared/sharedHelper';
+import { FormInput } from '../../shared/components/form-input/form-input';
 
 @Component({
   selector: 'app-change-password',
-  imports: [CommonModule, ReactiveFormsModule, ValidationMessage],
+  imports: [CommonModule, ReactiveFormsModule, ValidationMessage, FormInput],
   templateUrl: './change-password.html',
   styleUrl: './change-password.scss'
 })
@@ -46,7 +47,18 @@ export class ChangePassword implements OnInit {
 
     if(this.form.valid) {
       this.myProfileService.changePassword(this.form.value).subscribe({
+        next: (response) => {
+          this.sharedService.showNotification(response);
+          this.initializeForm();
+        }, error: (error) => {
+          if(error) {
+            if(error.errors) {
+              this.errorMessages = error.errors;
+            }
+          }
 
+          this.initializeForm();
+        }
       });
     }
   }

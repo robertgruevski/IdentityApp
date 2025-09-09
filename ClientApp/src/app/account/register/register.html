@@ -20,7 +20,7 @@
                     Name is required
                 </div>
                 } @else if ((submitted || form.get('name')?.dirty) &&
-                form.get('name')?.hasError('minlength') || form.get('name')?.hasError('maxlength')) {
+                form.get('name')?.hasError('minLength') || form.get('name')?.hasError('maxLength')) {
                 <div class="invalid-feedback">
                     Name must be at least 3, and a maximum of 15 characters
                 </div>
@@ -69,8 +69,8 @@
                 <div class="invalid-feedback">
                     Password is required
                 </div>
-                } @else if (submitted && (form.get('password')?.hasError('minlength') ||
-                form.get('password')?.hasError('maxlength'))) {
+                } @else if (submitted && (form.get('password')?.hasError('minLength') ||
+                form.get('password')?.hasError('maxLength'))) {
                 <div class="invalid-feedback">
                     Password must be at least 6, and a maximum of 15 characters
                 </div>

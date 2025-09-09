@@ -25,7 +25,7 @@ export class MyProfileService {
     return this.http.put<ApiResponse<any>>(this.apiUrl + 'myprofile', model);
   }
 
-  changedPassword(model: ChangePasswordModel) {
+  changePassword(model: ChangePasswordModel) {
     return this.http.put<ApiResponse<any>>(this.apiUrl + 'myprofile/change-password', model);
   }
 
