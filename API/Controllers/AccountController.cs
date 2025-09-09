@@ -74,6 +74,10 @@ namespace API.Controllers
 					return Unauthorized(new ApiResponse(401, title: "Account Locked",
 						message: SD.AccountLockedMessage(user.LockoutEnd.Value.DateTime), isHtmlEnabled: true, displayByDefault: true));
 				}
+				else if (result.IsNotAllowed && !user.EmailConfirmed)
+				{
+					return Unauthorized(new ApiResponse(401, title: SM.T_ConfirmEmailFirst, message: SM.M_ConfirmEmailFirst, displayByDefault: true));
+				}
 
 				return Unauthorized(new ApiResponse(401, message: "Invalid username or password"));
 			}
@@ -243,7 +247,7 @@ namespace API.Controllers
 
 			try
 			{
-				if(await SendForgotUsernameOrPasswordEmail(user))
+				if (await SendForgotUsernameOrPasswordEmail(user))
 				{
 					return Ok(new ApiResponse(200, title: SM.T_EmailSent, message: SM.M_ForgotUsernamePasswordSent));
 				}
@@ -253,7 +257,7 @@ namespace API.Controllers
 			}
 			catch (Exception ex)
 			{
-				return BadRequest(new ApiResponse(400, title: SM.T_EmailSentFailed, message: SM.M_EmailSentFailed, 
+				return BadRequest(new ApiResponse(400, title: SM.T_EmailSentFailed, message: SM.M_EmailSentFailed,
 					displayByDefault: true));
 			}
 		}
@@ -262,9 +266,9 @@ namespace API.Controllers
 		public async Task<ActionResult<ApiResponse>> ResetPassword(ResetPasswordDto model)
 		{
 			var user = await _userManager.FindByEmailAsync(model.Email);
-			if(user is null)
+			if (user is null)
 			{
-				return Unauthorized(new ApiResponse(401, title: SM.T_InvalidToken, message: SM.M_InvalidToken, 
+				return Unauthorized(new ApiResponse(401, title: SM.T_InvalidToken, message: SM.M_InvalidToken,
 					displayByDefault: true));
 			}
 
@@ -283,15 +287,15 @@ namespace API.Controllers
 
 			var appUserToken = await Context.AppUserTokens
 				.FirstOrDefaultAsync(x => x.UserId == user.Id && x.Name == SD.FUP && x.Value == model.Token);
-			if(appUserToken is null || appUserToken.Expires <= DateTime.UtcNow)
+			if (appUserToken is null || appUserToken.Expires <= DateTime.UtcNow)
 			{
-				if(appUserToken is not null)
+				if (appUserToken is not null)
 				{
 					Context.RemoveRange(appUserToken);
 					await Context.SaveChangesAsync();
 				}
 
-				return Unauthorized(new ApiResponse(401, title: SM.T_InvalidToken, message: SM.M_InvalidToken, 
+				return Unauthorized(new ApiResponse(401, title: SM.T_InvalidToken, message: SM.M_InvalidToken,
 					displayByDefault: true));
 			}
 

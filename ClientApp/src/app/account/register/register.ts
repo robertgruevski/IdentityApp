@@ -14,6 +14,7 @@ import { AccountService } from '../account.service';
 import { Router } from '@angular/router';
 import { SharedService } from '../../shared/shared.service';
 import { map, of, switchMap, timer } from 'rxjs';
+import { matchValues } from '../../shared/sharedHelper';
 
 @Component({
   selector: 'app-register',
@@ -59,11 +60,11 @@ export class Register implements OnInit {
         [this.checkEmailNotTaken()],
       ],
       password: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(15)]],
-      confirmPassword: ['', [Validators.required, this.matchValues('password')]],
+      confirmPassword: ['', [Validators.required, matchValues('password')]],
     });
 
     this.form.controls['password'].valueChanges.subscribe({
-      next: () => this.form.controls['confirmPassword'].updateValueAndValidity(),
+      next: () => this.form.controls['confirmPassword']?.updateValueAndValidity(),
     });
   }
 
@@ -133,10 +134,5 @@ export class Register implements OnInit {
     };
   }
 
-  private matchValues(matchTo: string): ValidatorFn {
-    return (control: AbstractControl) => {
-      return control.value === control.parent?.get(matchTo)?.value ? null : { notMatching: true };
-    };
-  }
   // #endregion
 }

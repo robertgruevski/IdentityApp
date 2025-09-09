@@ -15,7 +15,7 @@
 
 
 		// Messages
-		public const string M_AccountCreated = "Your account has been created, please confrim your email address.";
+		public const string M_AccountCreated = "Your account has been created, please confirm your email address.";
 		public const string M_InvalidToken = "Invalid token. Please try again.";
 		public const string M_AccountSuspended = "Your account has been suspended. Please contact our site administrator for more information.";
 		public const string M_ForgotUsernamePasswordSent = "If an eligible account exists, we've sent password reset instructions to its primary email. Check your inbox or spam folder.";

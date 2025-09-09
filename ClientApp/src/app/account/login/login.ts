@@ -1,12 +1,12 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AccountService } from '../account.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ValidationMessage } from '../../shared/components/errors/validation-message/validation-message';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, ValidationMessage],
+  imports: [ReactiveFormsModule, ValidationMessage, RouterLink],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
@@ -15,6 +15,7 @@ export class Login implements OnInit {
   submitted = false;
   errorMessages: string[] = [];
   returnUrl: string | null = null;
+  displayResendConfirmationLink: boolean = false;
 
   private formBuilder = inject(FormBuilder);
   private router = inject(Router);
@@ -60,8 +61,12 @@ export class Login implements OnInit {
           }
         },
         error: (error) => {
-          if (error.error.errors) {
-            this.errorMessages = error.error.errors;
+          if (error.errors) {
+            this.errorMessages = error.errors;
+          } else {
+            if (error && error.title.includes('Confirm your email first')) {
+              this.displayResendConfirmationLink = true;
+            }
           }
         },
       });
