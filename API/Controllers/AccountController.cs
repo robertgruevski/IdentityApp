@@ -1,38 +1,25 @@
-﻿using API.DTOs.Account;
-using API.Models;
-using API.Services.IServices;
-using API.Utility;
+﻿using API.DTOs;
+using API.DTOs.Account;
 using API.Extensions;
+using API.Models;
+using API.Utility;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using API.DTOs;
-using System.IO;
 
 namespace API.Controllers
 {
 	public class AccountController : ApiCoreController
 	{
-		private readonly UserManager<AppUser> _userManager;
-		private readonly SignInManager<AppUser> _signinManager;
-
-		public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signingManager)
-		{
-			this._userManager = userManager;
-			this._signinManager = signingManager;
-		}
-
 		[Authorize]
 		[HttpGet("refresh-appuser")]
 		public async Task<ActionResult<AppUserDto>> RefreshAppUser()
 		{
-			var user = await _userManager.Users.Where(x => x.Id == User.GetUserId()).FirstOrDefaultAsync();
+			var user = await UserManager.Users.Where(x => x.Id == User.GetUserId()).FirstOrDefaultAsync();
 
 			if (user is null)
 			{
@@ -52,34 +39,26 @@ namespace API.Controllers
 		[HttpPost("login")]
 		public async Task<ActionResult<AppUserDto>> Login(LoginDto model)
 		{
-			var user = await _userManager.Users
+			var user = await UserManager.Users
 				.Where(x => x.UserName == model.UserName)
 				.FirstOrDefaultAsync();
 
-			user ??= await _userManager.Users
+			user ??= await UserManager.Users
 				.Where(x => x.Email == model.UserName)
 				.FirstOrDefaultAsync();
 
 			if (user is null)
-				return Unauthorized(new ApiResponse(401, message: "Invalid username or password"));
+				return Unauthorized(new ApiResponse(401, message: "Invalid username or password", displayByDefault: true));
 
-			var result = await _signinManager.CheckPasswordSignInAsync(user, model.Password, true);
-
-			if (!result.Succeeded)
+			var message = await UserPasswordValidationAsync(user, model.Password);
+			if (!string.IsNullOrEmpty(message))
 			{
-				RemoveJwtCookie();
+				return Unauthorized(new ApiResponse(401, message: message, displayByDefault: true, isHtmlEnabled: true));
+			}
 
-				if (result.IsLockedOut)
-				{
-					return Unauthorized(new ApiResponse(401, title: "Account Locked",
-						message: SD.AccountLockedMessage(user.LockoutEnd.Value.DateTime), isHtmlEnabled: true, displayByDefault: true));
-				}
-				else if (result.IsNotAllowed && !user.EmailConfirmed)
-				{
-					return Unauthorized(new ApiResponse(401, title: SM.T_ConfirmEmailFirst, message: SM.M_ConfirmEmailFirst, displayByDefault: true));
-				}
-
-				return Unauthorized(new ApiResponse(401, message: "Invalid username or password"));
+			if (!user.EmailConfirmed)
+			{
+				return Unauthorized(new ApiResponse(401, title: SM.T_ConfirmEmailFirst, message: SM.M_ConfirmEmailFirst, displayByDefault: true));
 			}
 
 			return CreateAppUserDto(user);
@@ -102,7 +81,7 @@ namespace API.Controllers
 				LockoutEnabled = true
 			};
 
-			var result = await _userManager.CreateAsync(userToAdd, model.Password);
+			var result = await UserManager.CreateAsync(userToAdd, model.Password);
 			if (!result.Succeeded)
 				return BadRequest(result.Errors);
 
@@ -146,7 +125,7 @@ namespace API.Controllers
 		[HttpPut("confirm-email")]
 		public async Task<ActionResult<ApiResponse>> ConfirmEmail(ConfirmEmailDto model)
 		{
-			var user = await _userManager.FindByEmailAsync(model.Email);
+			var user = await UserManager.FindByEmailAsync(model.Email);
 			if (user is null)
 			{
 				return Unauthorized(new ApiResponse(401, title: SM.T_InvalidToken, message: SM.M_InvalidToken,
@@ -188,7 +167,7 @@ namespace API.Controllers
 		[HttpPost("resend-confirmation-email")]
 		public async Task<ActionResult<ApiResponse>> ResendConfirmationEmail(EmailDto model)
 		{
-			var user = await _userManager.FindByEmailAsync(model.Email);
+			var user = await UserManager.FindByEmailAsync(model.Email);
 			if (user is null)
 			{
 				// Sending a vague response with a fake delay
@@ -226,7 +205,7 @@ namespace API.Controllers
 		[HttpPost("forgot-username-or-password")]
 		public async Task<ActionResult<ApiResponse>> ForgotUsernameOrPassword(EmailDto model)
 		{
-			var user = await _userManager.FindByEmailAsync(model.Email);
+			var user = await UserManager.FindByEmailAsync(model.Email);
 			if (user is null)
 			{
 				PauseResponse();
@@ -265,7 +244,7 @@ namespace API.Controllers
 		[HttpPut("reset-password")]
 		public async Task<ActionResult<ApiResponse>> ResetPassword(ResetPasswordDto model)
 		{
-			var user = await _userManager.FindByEmailAsync(model.Email);
+			var user = await UserManager.FindByEmailAsync(model.Email);
 			if (user is null)
 			{
 				return Unauthorized(new ApiResponse(401, title: SM.T_InvalidToken, message: SM.M_InvalidToken,
@@ -300,87 +279,13 @@ namespace API.Controllers
 			}
 
 			Context.AppUserTokens.Remove(appUserToken);
-			await _userManager.RemovePasswordAsync(user);
-			await _userManager.AddPasswordAsync(user, model.NewPassword);
+			await UserManager.RemovePasswordAsync(user);
+			await UserManager.AddPasswordAsync(user, model.NewPassword);
 
 			return Ok(new ApiResponse(200, title: SM.T_PasswordReset, message: SM.M_PasswordReset));
 		}
 
 		#region Private Methods
-		private AppUserDto CreateAppUserDto(AppUser user)
-		{
-			string jwt = Services.TokenService.CreateJWT(user);
-			SetJwtCookie(jwt);
-
-			return new AppUserDto
-			{
-				Name = user.Name,
-				JWT = jwt
-			};
-		}
-		private void SetJwtCookie(string jwt)
-		{
-			var cookieOptions = new CookieOptions
-			{
-				IsEssential = true,
-				HttpOnly = true,
-				Secure = true,
-				Expires = DateTime.UtcNow.AddDays(int.Parse(Configuration["JWT:ExpiresInDays"])),
-				SameSite = SameSiteMode.None
-			};
-
-			Response.Cookies.Append(SD.IdentityAppCookie, jwt, cookieOptions);
-		}
-		private void RemoveJwtCookie()
-		{
-			Response.Cookies.Delete(SD.IdentityAppCookie);
-		}
-		private async Task<bool> CheckEmailExistsAsync(string email)
-		{
-			return await _userManager.Users.AnyAsync(x => x.Email == email);
-		}
-		private async Task<bool> CheckNameExistsAsync(string name)
-		{
-			return await _userManager.Users.AnyAsync(x => x.UserName == name);
-		}
-		private async Task<bool> SendConfirmEmailAsync(AppUser user)
-		{
-			var userToken = await Context.AppUserTokens
-				.Where(x => x.UserId == user.Id && x.Name == SD.EC)
-				.FirstOrDefaultAsync();
-
-			var tokenExpiresInMinutes = TokenExpiresInMinutes();
-
-			if (userToken is null)
-			{
-				var userTokenToAdd = new AppUserToken
-				{
-					UserId = user.Id,
-					Name = SD.EC,
-					Value = SD.GenerateRandomString(),
-					Expires = DateTime.UtcNow.AddMinutes(tokenExpiresInMinutes),
-					LoginProvider = string.Empty
-				};
-
-				Context.AppUserTokens.Add(userTokenToAdd);
-				userToken = userTokenToAdd;
-			}
-			else
-			{
-				userToken.Value = SD.GenerateRandomString();
-				userToken.Expires = DateTime.UtcNow.AddMinutes(tokenExpiresInMinutes);
-			}
-
-			await Context.SaveChangesAsync();
-
-			using StreamReader streamReader = System.IO.File.OpenText("EmailTemplates/confirm_email.html");
-			string htmlBody = streamReader.ReadToEnd();
-
-			string messageBody = string.Format(htmlBody, GetClientUrl(), user.Name, user.UserName, user.Email, userToken.Value, tokenExpiresInMinutes);
-			var emailSend = new EmailSendDto(user.Email, "Verify your email address", messageBody);
-
-			return await Services.EmailService.SendEmailAsync(emailSend);
-		}
 
 		private async Task<bool> SendForgotUsernameOrPasswordEmail(AppUser user)
 		{
