@@ -1,8 +1,10 @@
-﻿using API.Models;
+﻿using API.DTOs.MyProfile;
+using API.Models;
 using API.Services.IServices;
 using API.Utility;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using OtpNet;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -44,6 +46,17 @@ namespace API.Services
 			var jwt = tokenHandler.CreateToken(tokenDescriptor);
 
 			return tokenHandler.WriteToken(jwt);
+		}
+
+		public QrCodeDto GenerateQrCode(string email)
+		{
+			byte[] key = KeyGeneration.GenerateRandomKey(10);
+			string issuer = _config["MFA:Issuer"];
+
+			string secret = Base32Encoding.ToString(key);
+			string uri = $"otpauth://totp/{issuer}:{email}?secret={secret}&issuer={issuer}&digits=6";
+
+			return new QrCodeDto(secret, uri);
 		}
 	}
 }

@@ -126,5 +126,22 @@ namespace API.Controllers
 			RemoveJwtCookie();
 			return Ok(new ApiResponse(200, message: "Your user account has been permanently deleted.", displayByDefault: true));
 		}
+
+		[HttpGet("mfa-status")]
+		public async Task<IActionResult> MfaStatus()
+		{
+			var isEnabled = await UserManager.Users
+				.Where(x => x.Id == User.GetUserId())
+				.Select(x => x.TwoFactorEnabled)
+				.FirstOrDefaultAsync();
+
+			return Ok(new { IsEnabled = isEnabled});
+		}
+
+		[HttpGet("qr-code")]
+		public async Task<ActionResult<QrCodeDto>> GetQrCode()
+		{
+			return Services.TokenService.GenerateQrCode(User.GetEmail());
+		}
 	}
 }
