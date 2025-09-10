@@ -1,11 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormInput } from '../../shared/components/form-input/form-input';
 import { ValidationMessage } from '../../shared/components/errors/validation-message/validation-message';
 import { QRCodeComponent } from 'angularx-qrcode';
 import { CodeInput } from '../../shared/components/code-input/code-input';
-import { QrCodeModel } from '../../shared/models/myProfile/mfa.model';
+import { MfaEnableModel, QrCodeModel } from '../../shared/models/myProfile/mfa.model';
 import { SharedService } from '../../shared/shared.service';
 import { MyProfileService } from '../my-profile.service';
 
@@ -40,8 +40,65 @@ export class MfaSetup implements OnInit {
     this.getStatus();
   }
 
+  initializeForm() {
+    this.submitted = false;
+    this.errorMessages = [];
+
+    if (this.mfaEnabled == false) {
+      this.form = this.formBuilder.group({
+        code: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]],
+        currentPassword: ['', [Validators.required]],
+      });
+    } else {
+      this.form = this.formBuilder.group({
+        currentPassword: ['', [Validators.required]],
+      });
+    }
+
+    this.form.markAsPristine();
+  }
+
+  fullCodeReceive(code: string) {
+    this.form.get('code')?.setValue(code.replace(/ /g, ''));
+  }
+
   save() {
-    
+    this.submitted = true;
+    this.errorMessages = [];
+
+    if (this.form.valid) {
+      if (!this.mfaEnabled && this.qrCode && this.form) {
+        const model: MfaEnableModel = {
+          currentPassword: this.form.controls['currentPassword'].value,
+          secret: this.qrCode.secret,
+          code: this.form.controls['code'].value,
+        };
+
+        this.myProfileService.mfaEnable(model).subscribe({
+          next: (response) => {
+            this.sharedService.showNotification(response);
+            this.getStatus();
+          },
+          error: (error) => {
+            if (error && error.errors) {
+              this.errorMessages = error.errors;
+            }
+          },
+        });
+      } else {
+        this.myProfileService.mfaDisable(this.form.value).subscribe({
+          next: (response) => {
+            this.sharedService.showNotification(response);
+            this.getStatus();
+          },
+          error: (error) => {
+            if (error && error.errors) {
+              this.errorMessages = error.errors;
+            }
+          },
+        });
+      }
+    }
   }
 
   //#region Private Methods
@@ -53,9 +110,13 @@ export class MfaSetup implements OnInit {
           this.myProfileService.getQrCode().subscribe({
             next: (qrCode) => {
               this.qrCode = qrCode;
+              this.initializeForm();
               this.completed = true;
             },
           });
+        } else {
+          this.initializeForm();
+          this.completed = true;
         }
       },
     });
