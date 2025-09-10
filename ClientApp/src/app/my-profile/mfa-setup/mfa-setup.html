@@ -1,1 +1,26 @@
-<p>mfa-setup works!</p>
+@if (completed == true){
+<div class="card-header">
+    MFA Setup
+    @if(mfaEnabled) {
+    (<span class="text-success">Enabled</span>)
+    } @else {
+    (<span class="text-primary">Disabled</span>)
+    }
+</div>
+<div class="card-body">
+    <label class="mb-3">
+        @if(mfaEnabled) {
+        Disable your multi-factor authentication.
+        } @else {
+        Enable your multi-factor authentication by scanning the QR code below.
+        }
+    </label>
+    <form [formGroup]="form" (ngSubmit)="save()" autocomplete="off">
+        @if(mfaEnabled === false && qrCode) {
+        <div class="mb-2">
+            <qrcode [qrdata]="qrCode.uri" [width]="256" [errorCorrectionLevel]="'M'" />
+        </div>
+        }
+    </form>
+</div>
+}

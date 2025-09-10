@@ -6,6 +6,8 @@ import { MyProfileModel } from '../shared/models/myProfile/myProfile.model';
 import { EditMyProfileModel } from '../shared/models/myProfile/editMyProfile.model';
 import { ChangePasswordModel } from '../shared/models/myProfile/changePassword.model';
 import { DeleteAccountModel } from '../shared/models/myProfile/deleteAccount.model';
+import { EditProfileBaseModel } from '../shared/models/myProfile/editProfileBase.model';
+import { MfaEnableModel, QrCodeModel } from '../shared/models/myProfile/mfa.model';
 
 @Injectable({
   providedIn: 'root',
@@ -33,5 +35,21 @@ export class MyProfileService {
     return this.http.delete<ApiResponse<any>>(this.apiUrl + 'myprofile/delete-account', {
       body: model,
     });
+  }
+
+  mfaStatus() {
+    return this.http.get(this.apiUrl + 'myprofile/mfa-status');
+  }
+
+  getQrCode() {
+    return this.http.get<QrCodeModel>(this.apiUrl + 'myprofile/qr-code');
+  }
+
+  mfaEnable(model: MfaEnableModel){
+    return this.http.put<ApiResponse<any>>(this.apiUrl + 'myprofile/mfa-enable', model);
+  }
+
+  mfaDisable(model: EditProfileBaseModel) {
+    return this.http.put<ApiResponse<any>>(this.apiUrl + 'myprofile/mfa-disable', model);
   }
 }
