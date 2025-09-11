@@ -10,6 +10,7 @@ import { ApiResponse } from '../shared/models/apiResponse.model';
 import { ConfirmEmailModel, EmailModel } from '../shared/models/account/confirmEmail.model';
 import { ResetPasswordModel } from '../shared/models/account/resetPassword.model';
 import { MfaVerifyModel } from '../shared/models/account/mfaVerify.model';
+import { MfaDisableModel } from '../shared/models/account/mfaDisabled.model';
 
 @Injectable({
   providedIn: 'root',
@@ -96,6 +97,14 @@ export class AccountService {
 
   resetPassword(model: ResetPasswordModel) {
     return this.http.put<ApiResponse<any>>(this.apiUrl + 'account/reset-password', model);
+  }
+
+  mfaDisableRequest(model: EmailModel) {
+    return this.http.post<ApiResponse<any>>(this.apiUrl + 'account/mfa-disable-request', model);
+  }
+
+  mfaDisable(model: MfaDisableModel) {
+    return this.http.put<ApiResponse<any>>(this.apiUrl + 'account/mfa-disable', model);
   }
 
   setUser(user: UserModel | null) {

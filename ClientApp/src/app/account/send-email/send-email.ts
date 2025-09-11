@@ -31,7 +31,9 @@ export class SendEmail implements OnInit {
       const mode = this.activatedRoute.snapshot.paramMap.get('mode');
       if (
         mode &&
-        (mode.includes('resend-confirmation-email') || mode.includes('forgot-username-or-password'))
+        (mode.includes('resend-confirmation-email') ||
+          mode.includes('forgot-username-or-password') ||
+          mode.includes('mfa-disable-request'))
       ) {
         this.mode = mode;
       } else {
@@ -71,7 +73,7 @@ export class SendEmail implements OnInit {
             }
           },
         });
-      } else {
+      } else if (this.mode.includes('forgot-username-or-password')) {
         this.accountService.forgotUsernameOrPassword(new EmailModel(email)).subscribe({
           next: (response) => {
             this.sharedService.showNotification(response);
@@ -79,6 +81,20 @@ export class SendEmail implements OnInit {
           },
           error: (error) => {
             if (error & error.title.includes('Confirm your email first')) {
+              this.router.navigateByUrl('/account/confirm-email?email=' + email);
+            } else if (error.errors) {
+              this.errorMessages = error.errors;
+            }
+          },
+        });
+      } else {
+        this.accountService.mfaDisableRequest(new EmailModel(email)).subscribe({
+          next: (response) => {
+            this.sharedService.showNotification(response);
+            this.router.navigateByUrl('/account/login');
+          },
+          error: (error) => {
+            if (error && error.title.includes('Confirm your email first')) {
               this.router.navigateByUrl('/account/confirm-email?email=' + email);
             } else if (error.errors) {
               this.errorMessages = error.errors;

@@ -5,8 +5,10 @@
             <h1>
                 @if(mode.includes('resend-confirmation-email')) {
                 Resend confirmation email
+                } @else if (mode.includes('forgot-username-or-password')) {
+                    Forgot username or password
                 } @else {
-                Forgot username or password
+                    Disable MFA request
                 }
             </h1>
         </div>

@@ -36,6 +36,7 @@ namespace API.Utility
 		public const string FUP = "fup"; // Forgot username or password
 		public const string Authenticator = "authenticator";
 		public const string MFAS = "mfas";
+		public const string MFASDisable = "mfasdisable"; // multi-factor authentication secret
 
 		public static string AccountLockedMessage(DateTime endDate)
 		{
