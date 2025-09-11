@@ -3,7 +3,6 @@ using API.DTOs.MyProfile;
 using API.Extensions;
 using API.Utility;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
